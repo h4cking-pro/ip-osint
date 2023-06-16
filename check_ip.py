@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-import argparse
-import json
-import os
 
-from requests import get
-from shodan import Shodan
-from socket import gethostbyaddr
+# Módulos necesarios
+import argparse                     # Interpretación de argumentos
+import json                         # Interpretación de ficheros JSON
+import os                           # Ejecución de comandos del sistema
+
+from requests import get            # Realización de peticiones HTTP
+from shodan import Shodan           # API de Shodan
+from socket import gethostbyaddr    # Búsqueda inversa de IPs
+
 
 
 with open("keys.json", encoding="utf-8") as file:
