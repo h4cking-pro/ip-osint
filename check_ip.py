@@ -11,13 +11,35 @@ from shodan import Shodan           # API de Shodan
 from socket import gethostbyaddr    # Búsqueda inversa de IPs
 
 
+# Variables gloables
+VIRUSTOTAL_API_KEY = ""     # Clave de la API de VirusTotal
+SHODAN_API_KEY = ""         # Clave de la API de Shodan
 
-with open("keys.json", encoding="utf-8") as file:
-    apis = json.load(file)
 
-# Claves API extraídas del fichero 'keys.json'
-VIRUSTOTAL_API_KEY = apis["vt"]
-SHODAN_API_KEY = apis["shodan"]
+def get_api_keys(keys_file) -> dict:
+    """
+    Obtiene las claves de las APIs de un fichero JSON.
+
+    :return:    Diccionario con las claves de las APIs
+    """
+    # Lectura del fichero de claves API
+    with open(keys_file, encoding="utf-8") as file:
+        keys = json.load(file)
+
+    # Comprobar la existencia del fichero
+    if not keys:
+        print(f'Error: fichero {keys_file} no encontrado')
+        exit(1)
+
+    # Comprobar la estructura del fichero (JSON válido)
+    if not keys.get('virustotal') or not keys.get('shodan'):
+        print(f'Error: fichero {keys_file} no válido')
+        exit(1)
+
+    # Comprobar la validez de las claves API
+    # TODO
+
+    return keys
 
 
 def check_tor(ip) -> bool:
@@ -117,10 +139,17 @@ def main():
     Función principal del script.
     """
     parser = argparse.ArgumentParser(description='IP Information Lookup')
-    parser.add_argument('-i', '--ip', help='Single IP address')
-    parser.add_argument('-l', '--list', help='File containing list of IP addresses')
+    parser.add_argument('-i', '--ip', help='IP address to check')
+    parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
 
     args = parser.parse_args()
+
+    # Establecer las claves de las APIs
+    keys = get_api_keys(keys_file)
+    
+    global VIRUSTOTAL_API_KEY, SHODAN_API_KEY
+    VIRUSTOTAL_API_KEY = keys['vt']
+    SHODAN_API_KEY = keys['shodan']
 
     if args.ip:
         ip = args.ip
