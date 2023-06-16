@@ -1,15 +1,16 @@
 import argparse
 import json
 import os
-from socket import gethostbyaddr
 
 from requests import get
 from shodan import Shodan
+from socket import gethostbyaddr
+
 
 with open("keys.json", encoding="utf-8") as file:
     apis = json.load(file)
 
-# importa del archivo keys.json las claves de las API
+# Claves API extraídas del fichero 'keys.json'
 VIRUSTOTAL_API_KEY = apis["vt"]
 SHODAN_API_KEY = apis["shodan"]
 
@@ -22,13 +23,9 @@ def check_tor(ip) -> bool:
     
     :return:    True si pertenece a la red TOR; False en caso contrario
     """
-    url = f'https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip={ip}'
-    response = get(url)
+    response = get(f'https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip={ip}')
 
-    if ip in response.text:
-        return True
-    else:
-        return False
+    return ip in response.text
 
 
 def shodan_info(ip: str, api: Shodan) -> str:
@@ -38,28 +35,22 @@ def shodan_info(ip: str, api: Shodan) -> str:
     :param ip:  Dirección IP a buscar
     :param api: Objeto de la API de Shodan
 
-    :return:    Información de la IP en Shodan
+    :return:    Información de la IP en Shodan; mensaje de error en caso contrario
     """
     try:
-        # Print general info
         host = api.host(ip)
-        return ("""IP: {}
-        Hostnames: {}
-        Country: {}
-        Location: {}
-        Organization: {}
-        Operating System: {}
-        Port: {}
-        """.format(host['ip_str'],
-                   host.get('hostnames'),
-                   host.get('country_name'),
-                   f"{host.get('latitude')},"
-                   f" {host.get('longitude')}",
-                   host.get('org'),
-                   host.get('os'),
-                   host.get('ports')))
+        data = f'IP: {host["ip_str"]}\n'
+        data += f'Hostnames: {host.get("hostnames")}\n'
+        data += f'Country: {host.get("country_name")}\n'
+        data += f'Location: {host.get("latitude")}, {host.get("longitude")}\n'
+        data += f'Organization: {host.get("org")}\n'
+        data += f'Operating System: {host.get("os")}\n'
+        data += f'Port: {host.get("ports")}\n'
+
+        return data
+    
     except Exception as e:
-        print("Movida gorda: ", e)
+        return f'Error: \033[31m{e}\033[0m'
 
 
 def reverse_ip_to_domain(ip) -> str or None:
@@ -68,11 +59,12 @@ def reverse_ip_to_domain(ip) -> str or None:
 
     :param ip:  Dirección IP a buscar
 
-    :return:    Nombre de dominio asociado a la IP
+    :return:    Nombre de dominio asociado a la IP; None en caso contrario
     """
     try:
         hostnames = gethostbyaddr(ip)
         return hostnames[0]
+    
     except Exception as e:
         print(e)
         return None
@@ -86,16 +78,16 @@ def geolocate(ip) -> str or None:
 
     :return:    Información de la IP; None en caso contrario
     """
-    url = f'https://ipapi.co/{ip}/json/'
-    response = get(url)
+    response = get(f'https://ipapi.co/{ip}/json/')
+    
     if response.status_code == 200:
         result = json.loads(response.text)
-        # Hay más datos, pero acotamos a los que nos interesan: Para ver la lista completa, quitar el comentario de
-        # la línea siguiente
-        # print(result.keys())
-        result = {key: result[key] for key in result.keys() & {'city', 'region', 'country_name', 'country_capital',
-                                                               'postal', 'latitude', 'longitude', 'languages'}}
-        return result
+        keys = result.keys()
+        data = {'city', 'region', 'country_name', 'country_capital',
+                'postal', 'latitude', 'longitude', 'languages'}
+
+        return {key: result[key] for key in keys & data}  # Lista por comprensión
+
     return None
 
 
@@ -107,11 +99,11 @@ def virustotal_reputation(ip) -> str or None:
 
     :return:    Cadena con información; None en caso contrario
     """
-    url = f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={VIRUSTOTAL_API_KEY}&ip={ip}'
-    response = get(url)
+    response = get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={VIRUSTOTAL_API_KEY}&ip={ip}')
+
     if response.status_code == 200:
-        result = json.loads(response.text)
-        return result
+        return json.loads(response.text)
+
     return None
 
 
