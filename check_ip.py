@@ -12,6 +12,7 @@ from socket import gethostbyaddr    # Búsqueda inversa de IPs
 
 
 # Variables gloables
+keys_file = "keys.json"     # Fichero con las claves de las APIs
 VIRUSTOTAL_API_KEY = ""     # Clave de la API de VirusTotal
 SHODAN_API_KEY = ""         # Clave de la API de Shodan
 
@@ -141,8 +142,11 @@ def main():
     parser = argparse.ArgumentParser(description='IP Information Lookup')
     parser.add_argument('-i', '--ip', help='IP address to check')
     parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
-
+    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)')
     args = parser.parse_args()
+
+    if args.keys:
+        keys_file = args.keys
 
     # Establecer las claves de las APIs
     keys = get_api_keys(keys_file)
