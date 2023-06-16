@@ -29,12 +29,12 @@ def get_api_keys(keys_file) -> dict:
 
     # Comprobar la existencia del fichero
     if not keys:
-        print(f'Error: fichero {keys_file} no encontrado')
+        print(f"Error: fichero '{keys_file}' no encontrado")
         exit(1)
 
     # Comprobar la estructura del fichero (JSON válido)
     if not keys.get('virustotal') or not keys.get('shodan'):
-        print(f'Error: fichero {keys_file} no válido')
+        print(f'Error: la estructura del fichero de claves no es válida')
         exit(1)
 
     # Comprobar la validez de las claves API
