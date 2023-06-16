@@ -14,8 +14,14 @@ VIRUSTOTAL_API_KEY = apis["vt"]
 SHODAN_API_KEY = apis["shodan"]
 
 
-# Verificar si la IP es de TOR
 def check_tor(ip) -> bool:
+    """
+    Verifica si una IP pertenece a la red TOR.
+    
+    :param ip:  Dirección IP a verificar
+    
+    :return:    True si pertenece a la red TOR; False en caso contrario
+    """
     url = f'https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip={ip}'
     response = get(url)
 
@@ -25,8 +31,15 @@ def check_tor(ip) -> bool:
         return False
 
 
-# Verificar en Shodan
 def shodan_info(ip: str, api: Shodan) -> str:
+    """
+    Realiza una búsqueda en Shodan de la IP especificada.
+
+    :param ip:  Dirección IP a buscar
+    :param api: Objeto de la API de Shodan
+
+    :return:    Información de la IP en Shodan
+    """
     try:
         # Print general info
         host = api.host(ip)
@@ -49,8 +62,14 @@ def shodan_info(ip: str, api: Shodan) -> str:
         print("Movida gorda: ", e)
 
 
-# Realizar reverse ip lookup
 def reverse_ip_to_domain(ip) -> str or None:
+    """
+    Realiza una búsqueda inversa de la IP especificada.
+
+    :param ip:  Dirección IP a buscar
+
+    :return:    Nombre de dominio asociado a la IP
+    """
     try:
         hostnames = gethostbyaddr(ip)
         return hostnames[0]
@@ -59,8 +78,14 @@ def reverse_ip_to_domain(ip) -> str or None:
         return None
 
 
-# Realizar Geolocalización
 def geolocate(ip) -> str or None:
+    """
+    Utiliza geolocalización para obtener información de una IP.
+
+    :param ip:  Dirección IP a analizar
+
+    :return:    Información de la IP; None en caso contrario
+    """
     url = f'https://ipapi.co/{ip}/json/'
     response = get(url)
     if response.status_code == 200:
@@ -74,8 +99,14 @@ def geolocate(ip) -> str or None:
     return None
 
 
-# Verificar reputación en VirusTotal
 def virustotal_reputation(ip) -> str or None:
+    """
+    Verica la reputación de una IP en VirusTotal.
+
+    :param ip:  Dirección IP a verificar
+
+    :return:    Cadena con información; None en caso contrario
+    """
     url = f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={VIRUSTOTAL_API_KEY}&ip={ip}'
     response = get(url)
     if response.status_code == 200:
@@ -84,8 +115,10 @@ def virustotal_reputation(ip) -> str or None:
     return None
 
 
-# Función principal del script
 def main():
+    """
+    Función principal del script.
+    """
     parser = argparse.ArgumentParser(description='IP Information Lookup')
     parser.add_argument('-i', '--ip', help='Single IP address')
     parser.add_argument('-l', '--list', help='File containing list of IP addresses')
@@ -105,8 +138,12 @@ def main():
         parser.print_help()
 
 
-# Procesar una sola dirección IP
 def process_ip(ip) -> None:
+    """
+    Procesa una IP y muestra la información obtenida.
+
+    :param ip:  Dirección IP a procesar
+    """
     print(f'Checking IP: {ip}')
 
     # Verificar si es de TOR
