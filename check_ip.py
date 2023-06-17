@@ -11,36 +11,42 @@ from shodan import Shodan           # API de Shodan
 from socket import gethostbyaddr    # Búsqueda inversa de IPs
 
 
-# Variables gloables
-keys_file = "keys.json"     # Fichero con las claves de las APIs
+# Variables globales
 VIRUSTOTAL_API_KEY = ""     # Clave de la API de VirusTotal
 SHODAN_API_KEY = ""         # Clave de la API de Shodan
 
 
-def get_api_keys(keys_file) -> dict:
+def set_keys_from_file(keys_file):
     """
-    Obtiene las claves de las APIs de un fichero JSON.
-
-    :return:    Diccionario con las claves de las APIs
+    Obtiene las claves de las APIs de un fichero JSON
+    y las almacena en las variables globales del script.
     """
-    # Lectura del fichero de claves API
-    with open(keys_file, encoding="utf-8") as file:
-        keys = json.load(file)
+    global VIRUSTOTAL_API_KEY, SHODAN_API_KEY
 
-    # Comprobar la existencia del fichero
-    if not keys:
+    try:
+        # Leer el fichero de claves API
+        with open(keys_file, encoding="utf-8") as file:
+            keys = json.load(file)
+
+        # Comprobar que el fichero es válido
+        if not ('vt' in keys and 'shodan' in keys):
+            print('Error: los parámetros del fichero están mal definidos')
+            exit(1)
+
+        # Asignar las claves a las variables globales
+        VIRUSTOTAL_API_KEY = keys['vt']
+        SHODAN_API_KEY = keys['shodan']
+
+        # Comprobar la validez de las claves API
+        # TODO
+
+    except FileNotFoundError:
         print(f"Error: fichero '{keys_file}' no encontrado")
         exit(1)
 
-    # Comprobar la estructura del fichero (JSON válido)
-    if not keys.get('virustotal') or not keys.get('shodan'):
-        print(f'Error: la estructura del fichero de claves no es válida')
+    except KeyError:
+        print(f"Error: fichero '{keys_file}' no válido")
         exit(1)
-
-    # Comprobar la validez de las claves API
-    # TODO
-
-    return keys
 
 
 def check_tor(ip) -> bool:
@@ -142,18 +148,14 @@ def main():
     parser = argparse.ArgumentParser(description='IP Information Lookup')
     parser.add_argument('-i', '--ip', help='IP address to check')
     parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
-    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)')
+    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)', default="keys.json")
     args = parser.parse_args()
 
     if args.keys:
         keys_file = args.keys
 
     # Establecer las claves de las APIs
-    keys = get_api_keys(keys_file)
-    
-    global VIRUSTOTAL_API_KEY, SHODAN_API_KEY
-    VIRUSTOTAL_API_KEY = keys['vt']
-    SHODAN_API_KEY = keys['shodan']
+    set_keys_from_file(keys_file)
 
     if args.ip:
         ip = args.ip
