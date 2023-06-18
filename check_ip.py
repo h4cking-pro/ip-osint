@@ -12,8 +12,8 @@ from socket import gethostbyaddr    # Búsqueda inversa de IPs
 
 
 # Variables globales
-VIRUSTOTAL_API_KEY = ""     # Clave de la API de VirusTotal
-SHODAN_API_KEY = ""         # Clave de la API de Shodan
+_VIRUSTOTAL_API_KEY = ""    # Clave de la API de VirusTotal
+_SHODAN_API_KEY = ""        # Clave de la API de Shodan
 
 
 def set_keys_from_file(keys_file):
@@ -21,7 +21,7 @@ def set_keys_from_file(keys_file):
     Obtiene las claves de las APIs de un fichero JSON
     y las almacena en las variables globales del script.
     """
-    global VIRUSTOTAL_API_KEY, SHODAN_API_KEY
+    global _VIRUSTOTAL_API_KEY, _SHODAN_API_KEY
 
     try:
         # Leer el fichero de claves API
@@ -34,8 +34,8 @@ def set_keys_from_file(keys_file):
             exit(1)
 
         # Asignar las claves a las variables globales
-        VIRUSTOTAL_API_KEY = keys['vt']
-        SHODAN_API_KEY = keys['shodan']
+        _VIRUSTOTAL_API_KEY = keys['vt']
+        _SHODAN_API_KEY = keys['shodan']
 
         # Comprobar la validez de las claves API
         # TODO
@@ -133,7 +133,7 @@ def virustotal_reputation(ip) -> str or None:
 
     :return:    Cadena con información; None en caso contrario
     """
-    response = get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={VIRUSTOTAL_API_KEY}&ip={ip}')
+    response = get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={_VIRUSTOTAL_API_KEY}&ip={ip}')
 
     if response.status_code == 200:
         return json.loads(response.text)
@@ -187,7 +187,7 @@ def process_ip(ip) -> None:
 
     print("--------------------SHODAN-------------------")
     # Verificar en Shodan
-    shodan_result = shodan_info(ip, Shodan(SHODAN_API_KEY))
+    shodan_result = shodan_info(ip, Shodan(_SHODAN_API_KEY))
     if shodan_result:
         print('Shodan:')
         print(shodan_result)
