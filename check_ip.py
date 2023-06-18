@@ -123,14 +123,13 @@ def main():
     args = parser.parse_args()
 
     if args.ip:
-        ip = args.ip
-        process_ip(ip)
+        process_ip(args.ip)
+
     elif args.list:
-        filename = args.list
-        with open(filename, 'r') as f:
-            for ip in f:
-                ip = ip.strip()
-                process_ip(ip)
+        with open(args.list, 'r') as file:
+            for ip in file:
+                process_ip(ip.strip())
+
     else:
         parser.print_help()
 
