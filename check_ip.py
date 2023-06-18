@@ -11,13 +11,42 @@ from shodan import Shodan           # API de Shodan
 from socket import gethostbyaddr    # Búsqueda inversa de IPs
 
 
+# Variables globales
+_VIRUSTOTAL_API_KEY = ""    # Clave de la API de VirusTotal
+_SHODAN_API_KEY = ""        # Clave de la API de Shodan
 
-with open("keys.json", encoding="utf-8") as file:
-    apis = json.load(file)
 
-# Claves API extraídas del fichero 'keys.json'
-VIRUSTOTAL_API_KEY = apis["vt"]
-SHODAN_API_KEY = apis["shodan"]
+def set_keys_from_file(keys_file):
+    """
+    Obtiene las claves de las APIs de un fichero JSON
+    y las almacena en las variables globales del script.
+    """
+    global _VIRUSTOTAL_API_KEY, _SHODAN_API_KEY
+
+    try:
+        # Leer el fichero de claves API
+        with open(keys_file, encoding="utf-8") as file:
+            keys = json.load(file)
+
+        # Comprobar que el fichero es válido
+        if not ('vt' in keys and 'shodan' in keys):
+            print('Error: los parámetros del fichero están mal definidos')
+            exit(1)
+
+        # Asignar las claves a las variables globales
+        _VIRUSTOTAL_API_KEY = keys['vt']
+        _SHODAN_API_KEY = keys['shodan']
+
+        # Comprobar la validez de las claves API
+        # TODO
+
+    except FileNotFoundError:
+        print(f"Error: fichero '{keys_file}' no encontrado")
+        exit(1)
+
+    except KeyError:
+        print(f"Error: fichero '{keys_file}' no válido")
+        exit(1)
 
 
 def check_tor(ip) -> bool:
@@ -104,7 +133,7 @@ def virustotal_reputation(ip) -> str or None:
 
     :return:    Cadena con información; None en caso contrario
     """
-    response = get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={VIRUSTOTAL_API_KEY}&ip={ip}')
+    response = get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={_VIRUSTOTAL_API_KEY}&ip={ip}')
 
     if response.status_code == 200:
         return json.loads(response.text)
@@ -117,10 +146,16 @@ def main():
     Función principal del script.
     """
     parser = argparse.ArgumentParser(description='IP Information Lookup')
-    parser.add_argument('-i', '--ip', help='Single IP address')
-    parser.add_argument('-l', '--list', help='File containing list of IP addresses')
-
+    parser.add_argument('-i', '--ip', help='IP address to check')
+    parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
+    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)', default="keys.json")
     args = parser.parse_args()
+
+    if args.keys:
+        keys_file = args.keys
+
+    # Establecer las claves de las APIs
+    set_keys_from_file(keys_file)
 
     if args.ip:
         process_ip(args.ip)
@@ -151,7 +186,7 @@ def process_ip(ip) -> None:
 
     print("--------------------SHODAN-------------------")
     # Verificar en Shodan
-    shodan_result = shodan_info(ip, Shodan(SHODAN_API_KEY))
+    shodan_result = shodan_info(ip, Shodan(_SHODAN_API_KEY))
     if shodan_result:
         print('Shodan:')
         print(shodan_result)
