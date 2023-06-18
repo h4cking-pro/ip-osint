@@ -2,18 +2,15 @@
 
 
 # Módulos necesarios
-import argparse                     # Interpretación de argumentos
-import json                         # Interpretación de ficheros JSON
-import os                           # Ejecución de comandos del sistema
+import argparse         # Interpretación de argumentos
+import json             # Interpretación de ficheros JSON
 
-from requests import get            # Realización de peticiones HTTP
-from shodan import Shodan           # API de Shodan
-from socket import gethostbyaddr    # Búsqueda inversa de IPs
-
-
-# Variables globales
-_VIRUSTOTAL_API_KEY = ""    # Clave de la API de VirusTotal
-_SHODAN_API_KEY = ""        # Clave de la API de Shodan
+# Módulos propios
+from utils import tor   # Análisis con TOR
+from utils import sho   # Análisis con Shodan           (lib. API)
+from utils import who   # Análisis con 'whois'
+from utils import geo   # Análisis con geolocalización
+from utils import vir   # Análisis con VirusTotal       (lib. API)
 
 
 def get_parser():
@@ -21,26 +18,28 @@ def get_parser():
     Crea un analizador de argumentos para el script
     definiendo sus posibles opciones y características.
 
-    :return:   El objeto analizador de argumentos con los valores recibidos
+    :return:   El analizador de argumentos del script
     """
 
     # Crear el analizador de argumentos
     parser = argparse.ArgumentParser(description='IP Information Lookup')
     
     # Definir las posibles opciones y sus características
-    parser.add_argument('-i', '--ip', help='IP address to check')
-    parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
-    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)', default="keys.json")
+    parser.add_argument('-i', '--ip', metavar='IP',
+                        help='IP address to check')
+    parser.add_argument('-l', '--list', metavar='file',
+                        help='text file with a list of IP addresses to check')
+    parser.add_argument('-k', '--keys', metavar='file',
+                        help='JSON file with API keys', default="keys.json")
     
     return parser
 
 
-def set_keys_from_file(keys_file):
+def set_keys_from_file(keys_file: str):
     """
     Obtiene las claves de las APIs de un fichero JSON
     y las almacena en las variables globales del script.
     """
-    global _VIRUSTOTAL_API_KEY, _SHODAN_API_KEY
 
     try:
         # Leer el fichero de claves API
@@ -53,111 +52,43 @@ def set_keys_from_file(keys_file):
             exit(1)
 
         # Asignar las claves a las variables globales
-        _VIRUSTOTAL_API_KEY = keys['vt']
-        _SHODAN_API_KEY = keys['shodan']
+        vir.set_api_key(keys['vt'])
+        sho.set_api_key(keys['shodan'])
 
         # Comprobar la validez de las claves API
         # TODO
 
     except FileNotFoundError:
-        print(f"Error: fichero '{keys_file}' no encontrado")
+        print(f"\033[1;31mFichero '{keys_file}' no encontrado\033[0m")
         exit(1)
 
     except KeyError:
-        print(f"Error: fichero '{keys_file}' no válido")
+        print(f"\033[1;31mEl fichero '{keys_file}' no es válido\033[0m")
         exit(1)
 
 
-def check_tor(ip) -> bool:
+def show_info(ip) -> None:
     """
-    Verifica si una IP pertenece a la red TOR.
-    
-    :param ip:  Dirección IP a verificar
-    
-    :return:    True si pertenece a la red TOR; False en caso contrario
+    Procesa una IP y muestra la información obtenida.
+
+    :param ip:  Dirección IP a procesar
     """
-    response = get(f'https://check.torproject.org/cgi-bin/TorBulkExitList.py?ip={ip}')
+    print(f'\n\033[1;35mIP: {ip}\033[0m\n')
 
-    return ip in response.text
+    tor.print_info(ip)
+    print('\n')
 
+    sho.print_info(ip)
+    print('\n')
 
-def shodan_info(ip: str, api: Shodan) -> str:
-    """
-    Realiza una búsqueda en Shodan de la IP especificada.
+    who.print_info(ip)
+    print('\n')
 
-    :param ip:  Dirección IP a buscar
-    :param api: Objeto de la API de Shodan
+    geo.print_info(ip)
+    print('\n')
 
-    :return:    Información de la IP en Shodan; mensaje de error en caso contrario
-    """
-    try:
-        host = api.host(ip)
-        data = f'IP: {host["ip_str"]}\n'
-        data += f'Hostnames: {host.get("hostnames")}\n'
-        data += f'Country: {host.get("country_name")}\n'
-        data += f'Location: {host.get("latitude")}, {host.get("longitude")}\n'
-        data += f'Organization: {host.get("org")}\n'
-        data += f'Operating System: {host.get("os")}\n'
-        data += f'Port: {host.get("ports")}\n'
-
-        return data
-    
-    except Exception as e:
-        return f'Error: \033[31m{e}\033[0m'
-
-
-def reverse_ip_to_domain(ip) -> str or None:
-    """
-    Realiza una búsqueda inversa de la IP especificada.
-
-    :param ip:  Dirección IP a buscar
-
-    :return:    Nombre de dominio asociado a la IP; None en caso contrario
-    """
-    try:
-        hostnames = gethostbyaddr(ip)
-        return hostnames[0]
-    
-    except Exception as e:
-        print(e)
-        return None
-
-
-def geolocate(ip) -> str or None:
-    """
-    Utiliza geolocalización para obtener información de una IP.
-
-    :param ip:  Dirección IP a analizar
-
-    :return:    Información de la IP; None en caso contrario
-    """
-    response = get(f'https://ipapi.co/{ip}/json/')
-    
-    if response.status_code == 200:
-        result = json.loads(response.text)
-        keys = result.keys()
-        data = {'city', 'region', 'country_name', 'country_capital',
-                'postal', 'latitude', 'longitude', 'languages'}
-
-        return {key: result[key] for key in keys & data}  # Lista por comprensión
-
-    return None
-
-
-def virustotal_reputation(ip) -> str or None:
-    """
-    Verica la reputación de una IP en VirusTotal.
-
-    :param ip:  Dirección IP a verificar
-
-    :return:    Cadena con información; None en caso contrario
-    """
-    response = get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={_VIRUSTOTAL_API_KEY}&ip={ip}')
-
-    if response.status_code == 200:
-        return json.loads(response.text)
-
-    return None
+    vir.print_info(ip)
+    print('\n')
 
 
 def main():
@@ -174,75 +105,19 @@ def main():
     set_keys_from_file(keys_file)
 
     if args.ip:
-        process_ip(args.ip)
+        show_info(args.ip)
 
     elif args.list:
         with open(args.list, 'r') as file:
             for ip in file:
-                process_ip(ip.strip())
+                show_info(ip.strip())
 
     else:
         parser.print_help()
 
 
-def process_ip(ip) -> None:
-    """
-    Procesa una IP y muestra la información obtenida.
-
-    :param ip:  Dirección IP a procesar
-    """
-    print(f'Checking IP: {ip}')
-
-    # Verificar si es de TOR
-    print("--------------------TOR-------------------")
-    if check_tor(ip):
-        print('TOR: Yes')
-    else:
-        print('TOR: No')
-
-    print("--------------------SHODAN-------------------")
-    # Verificar en Shodan
-    shodan_result = shodan_info(ip, Shodan(_SHODAN_API_KEY))
-    if shodan_result:
-        print('Shodan:')
-        print(shodan_result)
-    else:
-        print('Shodan: No information available')
-
-    # Realizar Whois
-    print("--------------------WHOIS-------------------")
-    whois_result = os.system(f'whois {ip}')
-    print('Whois:')
-    print(whois_result)
-
-    # Realizar reverse ip lookup
-    print("--------------------ReverseIpLookup-------------------")
-    reverse_ip_to_domain_result = reverse_ip_to_domain(ip)
-    if reverse_ip_to_domain_result:
-        print(f'Reverse ip lookup: {reverse_ip_to_domain_result}')
-    else:
-        print('Reverse ip lookup: No information available')
-
-    # Realizar Geolocalización
-    print("--------------------GEOLOCALIZACIÓN-------------------")
-    geolocate_result = geolocate(ip)
-    if geolocate_result:
-        print('Geolocation:')
-        print(json.dumps(geolocate_result, indent=4))
-    else:
-        print('Geolocation: No information available')
-
-    # Verificar reputación en VirusTotal
-    print("--------------------VIRUSTOTAL-------------------")
-    virustotal_result = virustotal_reputation(ip)
-    if virustotal_result:
-        print('VirusTotal Reputation:')
-        print(json.dumps(virustotal_result, indent=4))
-    else:
-        print('VirusTotal Reputation: No information available')
-
-    print('')
-
-
 if __name__ == '__main__':
+    """
+    Punto de entrada al script.
+    """
     main()
