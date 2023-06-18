@@ -16,6 +16,25 @@ _VIRUSTOTAL_API_KEY = ""    # Clave de la API de VirusTotal
 _SHODAN_API_KEY = ""        # Clave de la API de Shodan
 
 
+def get_parser():
+    """
+    Crea un analizador de argumentos para el script
+    definiendo sus posibles opciones y características.
+
+    :return:   El objeto analizador de argumentos con los valores recibidos
+    """
+
+    # Crear el analizador de argumentos
+    parser = argparse.ArgumentParser(description='IP Information Lookup')
+    
+    # Definir las posibles opciones y sus características
+    parser.add_argument('-i', '--ip', help='IP address to check')
+    parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
+    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)', default="keys.json")
+    
+    return parser
+
+
 def set_keys_from_file(keys_file):
     """
     Obtiene las claves de las APIs de un fichero JSON
@@ -145,10 +164,7 @@ def main():
     """
     Función principal del script.
     """
-    parser = argparse.ArgumentParser(description='IP Information Lookup')
-    parser.add_argument('-i', '--ip', help='IP address to check')
-    parser.add_argument('-l', '--list', help='File with list of IP addresses to check')
-    parser.add_argument('-k', '--keys', help='File with API keys (must be JSON)', default="keys.json")
+    parser = get_parser()
     args = parser.parse_args()
 
     if args.keys:
