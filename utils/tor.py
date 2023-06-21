@@ -2,6 +2,9 @@
 El objetivo de este módulo es gestionar las distintas funcionalidades
 del script principal relacionadas con la extracción de información de
 una IP relacionada con la red Tor.
+
+La fuente de datos actual es https://www.dan.me.uk/tornodes, cuya lista
+de nodos fue procesada por @15Galan en un Gist usado en 'is_node()'.
 """
 
 # Módulos necesarios
@@ -24,7 +27,7 @@ def is_node(ip: str) -> list:
              'raw/7c1ff355ca25f2a19ccaa24f456c1dc8ab7059b6/tor-nodes.md'
     response = requests.get(source)
     rows = response.text.split('\n')[2:-1]  # Dividir por filas (sin cabeceras)
-    progress = ProgressBar(len(rows))  # Cantidad de IPs a revisar
+    progress = ProgressBar(len(rows))       # Cantidad de IPs a revisar
 
     # Resultado
     total = []
@@ -49,23 +52,24 @@ def is_node(ip: str) -> list:
                 "flags": flags_translation(row[4])
             })
 
-        progress.update(info=row[0])
+        # progress.update(info=row[0])  # Error en la salida de información
+        progress.update()
 
     return total
 
 
 def flags_translation(flags: str) -> set:
     """
-    Traduce las flags de un nodo de la red TOR.
+    Traduce los flags de un nodo de la red TOR.
     
     :param flags:   Flags del nodo de salida en formato 'EFGHRSDVX'
     
-    :return:        Conjunto con las flags traducidas
+    :return:        Conjunto con los flags traducidos
     """
     translation = set()
 
     # El campo 'flags' puede adoptar las letras 'ABEFGHRSDVX',
-    # cada una corresponde a la inicial del nombre de una flag
+    # cada una corresponde a la inicial del nombre de un flag
 
     if 'A' in flags: translation.add('Authority')
     if 'B' in flags: translation.add('BadExit')
@@ -96,17 +100,17 @@ def print_info(ip: str):
     nodes = is_node(ip)
     count = len(nodes)
 
-    print('')   # Separar la barra de progreso del resto de texto
+    print()     # Separar la barra de progreso del resto del texto
 
     if 0 == count:
-        print('No se encontró información sobre la IP\n')
+        print('No se encontró información sobre la IP.\n')
         return None
 
     elif 1 == count:
-        print('Se encontró 1 entrada para la IP:\n')
+        print('Se encontró 1 entrada para la IP.\n')
 
     elif 1 < count:
-        print(f'Se encontraron {len(nodes)} entradas para la IP:\n')
+        print(f'Se encontraron {len(nodes)} entradas para la IP.\n')
 
     for node in nodes:
         print(f'Nombre:     {node["name"]}')
