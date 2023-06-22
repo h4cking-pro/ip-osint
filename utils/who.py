@@ -121,6 +121,9 @@ def get_info(ip: str) -> list:
                 key, value = line.split(":", 1)             # Extraer clave-valor
                 key, value = key.strip(), value.strip()     # Eliminar espacios
 
+                if not value:                               # Valor vacío
+                    value = '\033[31mSin información\033[0m'
+
                 # Si la clave ya existe se le añade el valor
                 if current_group.__contains__(key):
                     current_group[key] += f'\n{value}'  # Clave repetida
@@ -143,21 +146,31 @@ def print_info(ip: str):
     """
     print('\033[1mwhois\033[0m\n')  # Negrita
 
-    result = get_info(ip)
+    whois_info = get_info(ip)
+    count = 1
 
-    # Clave más larga
-    max_key_len = max(map(len, result.keys())) + 1
+    # Calcular el tamaño máximo de las claves
+    max_key_len = max([len(key) for section in whois_info for group in section for key in group]) + 1
 
-    for key, value in result.items():
-        # Comprobar cuántas líneas tiene el valor
-        if '\n' not in value:
-            print(f'{key:<{max_key_len}}: {value}')     # Alineado a la izquierda
+    for section in whois_info:
+        print(f'Sección {count}/{len(whois_info)}\n')   # Título de la sección
+        count += 1
 
-        else:
-            value_lines = value.split('\n')
+        for group in section:
+            for key, value in group.items():
+                # Comprobar cuántas líneas tiene el valor
+                if '\n' not in value:
+                    print(f'{key:<{max_key_len}}: {value}')     # Alineado a la izquierda
 
-            print(f'{key:<{max_key_len}}: {value_lines[0]}')
+                else:
+                    value_lines = value.split('\n')
 
-            # Mostrar el resto de líneas continuando el formato anterior
-            for line in value_lines[1:]:
-                print(f'{"":<{max_key_len}}  {line}')
+                    print(f'{key:<{max_key_len}}: {value_lines[0]}')
+
+                    # Mostrar el resto de líneas continuando el formato anterior
+                    for line in value_lines[1:]:
+                        print(f'{"":<{max_key_len}}  {line}')
+
+            print()     # Separador entre grupos
+
+        print()         # Separador entre secciones
