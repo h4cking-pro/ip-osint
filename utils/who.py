@@ -108,7 +108,7 @@ def get_info(ip: str) -> list:
 
     except Exception as e:
         print(f'0\033[31m{e}\033[0m')
-        exit(1)
+        return []
 
     info = []   # Información de la IP
 
@@ -147,6 +147,11 @@ def print_info(ip: str):
     print('\033[1mwhois\033[0m\n')  # Negrita
 
     whois_info = get_info(ip)
+
+    if not whois_info:
+        print('\033[31mNo se pudo obtener información de la IP.\033[0m')
+        return
+    
     count = 1
 
     # Calcular el tamaño máximo de las claves
