@@ -15,54 +15,124 @@ salida contiene muchos datos que son formateados de la siguiente forma:
 import os               # Ejecución de comandos del sistema
 
 
-def get_info(ip: str) -> dict:
+# Variables globales
+OUTPUT: str = ''        # Salida de 'whois'
+
+
+def _get_sections(start="# start\n\n", end="\n\n# end") -> list:
+    """
+    Obtiene las secciones relevantes de la salida del comando
+    'whois', identificadas por los marcadores de inicio y fin.
+
+    :param start:   Inicio de la sección (por defecto: '# start\n')
+    :param end:     Final de la sección (por defecto: '# end\n')
+
+    :return:        Lista de secciones relevantes
+    """
+    global OUTPUT
+
+    # Encontrar los marcadores de inicio y fin
+    start_index = OUTPUT.find(start) + len(start)   # Cursor detrás
+    end_index = OUTPUT.find(end)                    # Cursor delante
+
+    # Secciones relevantes
+    relevant_data = []
+
+    # Buscar todas las secciones relevantes
+    while start_index != -1 and end_index != -1:
+        relevant_data.append(OUTPUT[start_index:end_index])
+
+        # Encontrar los siguientes marcadores
+        start_index = OUTPUT.find(start, start_index) + len(start)  # Cursor detrás
+        end_index = OUTPUT.find(end, end_index + 1)                 # Cursor delante
+
+    return relevant_data
+
+
+def _get_groups(section: str) -> list:
+    """
+    Obtiene los grupos de información de una sección.
+
+    :param section: Sección de información
+
+    :return:        Lista de grupos de información
+    """
+    groups = []     # Grupos de información
+    group = ''      # Grupo actual (auxiliar)
+
+    # Recorrer la sección y almacenar los grupos de información
+    for line in section.split('\n'):
+        line = line.strip()
+
+        if line:
+            group += line + '\n'        # Se añade la línea al grupo
+
+        elif group:
+            groups.append(group[:-1])   # Se añade el grupo a la lista (sin el '\n' final)
+
+        if not line:
+            group = ''                  # Se vacía el grupo actual
+
+    if group:
+        groups.append(group[:-1])       # Se añade el último grupo a la lista
+
+    return groups
+
+
+def _get_lines(group: str) -> list:
+    """
+    Obtiene las líneas de información de un grupo.
+
+    :param group:   Grupo de información
+
+    :return:        Lista de líneas de información
+    """
+    # Esta función es bastante redundante, pero
+    # hace más legible el código de 'get_info()'
+
+    return group.split('\n')
+
+
+def get_info(ip: str) -> list:
     """
     Obtiene la información de una IP a través del comando 'whois'.
 
     :param ip:  Dirección IP a buscar
 
-    :return:    Diccionario con la información de la IP
+    :return:    Lista de secciones relevantes de información de la IP
     """
+    global OUTPUT
+
     try:
-        output = os.popen(f"whois {ip}").read()
+        OUTPUT = os.popen(f"whois {ip}").read()
 
     except Exception as e:
         print(f'0\033[31m{e}\033[0m')
         exit(1)
 
-    # Diccionario con la información de la IP
-    data = {}
+    info = []   # Información de la IP
 
-    # Marcadores de inicio y fin de la sección relevante (propio de 'whois')
-    start_marker = "# start\n"
-    end_marker = "# end\n"
+    # Encontrar todas las secciones relevantes      # Complejidad: O(n^3)
+    for section in _get_sections():
+        current_section = []
+        for group in _get_groups(section):
+            current_group = {}
+            for line in _get_lines(group):
+                key, value = line.split(":", 1)             # Extraer clave-valor
+                key, value = key.strip(), value.strip()     # Eliminar espacios
 
-    # Encontrar los marcadores de inicio y fin
-    start_index = output.find(start_marker) + len(start_marker)     # Cursor detrás
-    end_index = output.find(end_marker)                             # Cursor delante
-
-    # Extraer la sección relevante de la salida
-    lines = output[start_index:end_index].split("\n")
-
-    for line in lines:
-        line = line.strip()
-
-        # La línea es un comentario o está vacía
-        if line and not line.startswith("#"):
-            # La línea contiene una clave y un valor
-            if ":" in line:
-                key, value = line.split(":", 1)
-                key = key.strip()
-                value = value.strip()
-
-                # La clave ya existe
-                if data.__contains__(key):
-                    data[key] += f'\n{value}'   # Se concatena el valor
+                # Si la clave ya existe se le añade el valor
+                if current_group.__contains__(key):
+                    current_group[key] += f'\n{value}'  # Clave repetida
 
                 else:
-                    data[key] = value           # El valor se añade por primera vez
+                    current_group[key] = value          # Clave nueva
 
-    return data
+            current_section.append(current_group)
+
+        info.append(current_section)
+
+    return info
 
 
 def print_info(ip: str):
