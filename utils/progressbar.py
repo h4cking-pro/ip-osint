@@ -21,6 +21,15 @@ class ProgressBar:
         self.state = 0
         self.total = total
 
+    def expand(self, units):
+        """
+        Expands the progress bar total value.
+        Useful when the total value is unknown at the beginning.
+
+        :param units: number of units to expand the progress bar.
+        """
+        self.total += units
+
     def update(self, step=1, info=''):
         """
         Updates the progress bar and its information message.
