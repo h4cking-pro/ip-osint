@@ -38,29 +38,23 @@ def get_info(ip: str) -> dict:
     # Extraer la sección relevante de la salida
     lines = output[start_index:end_index].split("\n")
 
-    # Procesar cada línea
-    current_key = None
-    current_value = ""
-
     for line in lines:
         line = line.strip()
 
         # La línea es un comentario o está vacía
-        if line.startswith("#") or not line:
-            continue
+        if line and not line.startswith("#"):
+            # La línea contiene una clave y un valor
+            if ":" in line:
+                key, value = line.split(":", 1)
+                key = key.strip()
+                value = value.strip()
 
-        if ":" in line:
-            if current_key:
-                data[current_key] = current_value.strip()
+                # La clave ya existe
+                if data.__contains__(key):
+                    data[key] += f'\n{value}'   # Se concatena el valor
 
-            current_key, current_value = map(str.strip, line.split(":", 1))
-
-        else:
-            current_value += " " + line.strip()
-
-    # Agregar la última clave-valor al diccionario
-    if current_key:
-        data[current_key] = current_value.strip()
+                else:
+                    data[key] = value           # El valor se añade por primera vez
 
     return data
 
@@ -79,5 +73,15 @@ def print_info(ip: str):
     max_key_len = max(map(len, result.keys())) + 1
 
     for key, value in result.items():
-        print(f'{key:<{max_key_len}}: {value}')     # Alineado a la izquierda
+        # Comprobar cuántas líneas tiene el valor
+        if '\n' not in value:
+            print(f'{key:<{max_key_len}}: {value}')     # Alineado a la izquierda
 
+        else:
+            value_lines = value.split('\n')
+
+            print(f'{key:<{max_key_len}}: {value_lines[0]}')
+
+            # Mostrar el resto de líneas continuando el formato anterior
+            for line in value_lines[1:]:
+                print(f'{"":<{max_key_len}}  {line}')
