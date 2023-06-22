@@ -2,6 +2,12 @@
 El objetivo de este módulo es gestionar las distintas funcionalidades
 del script principal relacionadas con la extracción de información de
 una IP obtenida con el comando 'whois'.
+
+Se usa la salida del comando 'whois' para extraer información, dicha
+salida contiene muchos datos que son formateados de la siguiente forma:
+- Sección: bloque de texto entre '# start' y '# end' de 'whois' (varios)
+- Grupo: conjunto de líneas con una clave y un valor (varios/sección)
+- Línea: par de clave y valor separados por ':' (varios/grupo)
 """
 
 
