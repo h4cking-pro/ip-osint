@@ -6,10 +6,10 @@ una IP relacionada con VirusTotal.
 
 
 # Módulos necesarios
-import json                 # Interpretación de ficheros JSON
-import requests             # Realizar peticiones HTTP
+import json                     # Interpretación de ficheros JSON
+import requests                 # Realizar peticiones HTTP
 
-from io import StringIO     # Lectura de ficheros
+from datetime import datetime   # Tratamiento de fecha y hora
 
 
 # Variables globales
@@ -83,17 +83,84 @@ def _print_singles(reputation: dict):
 
     :param reputation:  Diccionario con la información de la IP
     """
-    msg = StringIO()
     country = _get_country(reputation['country'])
+    
+    print(f'Sistema Autónomo (AS): {reputation["as_owner"]} ({reputation["asn"]}).')
+    print(f'Perteneciente a \'{country}\' ({reputation["country"]}).')
+    print()
 
-    # Construir el mensaje
-    msg.write(f'Sistema Autónomo (AS): {reputation["as_owner"]} ({reputation["asn"]}).\n')
-    msg.write(f'Perteneciente a \'{country}\' ({reputation["country"]}).\n')
 
-    # Mostrar el mensaje
-    print(msg.getvalue())
+def _print_multiples(reputation: dict):
+    """
+    Muestra la información de la IP que requiere de un formato especial.
 
-    msg.close()             # Debe cerrarse el buffer una vez se haya usado
+    :param reputation:  Diccionario con la información de la IP
+    """
+    def _print_reputation_dict(elements: list):
+        """
+        Muestra el contenido de un elemento de reputación de VirusTotal.
+
+        :param elements:  Lista con la información de la IP
+        """
+        if elements:
+            for item in elements:
+                date = datetime.strptime(item['date'], '%Y-%m-%d %H:%M:%S')\
+                       .strftime('%d/%m/%Y\t%H:%M:%S')
+
+                # Alineado a la izquierda
+                print(f"\t{'sha256':<{max_len}}: {item['sha256']}")
+                print(f"\t{'positivos':<{max_len}}: {item['positives']}")
+                print(f"\t{'total':<{max_len}}: {item['total']}")
+                print(f"\t{'fecha':<{max_len}}: {date}")
+                print()
+
+        else:
+            print('\t\033[31mNo hay muestras disponibles.\033[0m')
+            print()
+
+    # Calcular la máxima longitud de los nombres
+    max_len = max([len(key) for key, _ in reputation['detected_urls'][0].items()]) + 1
+
+    print('URLs no detectadas:\n')
+    for element in reputation['undetected_urls']:
+        date = datetime.strptime(element[4], '%Y-%m-%d %H:%M:%S')\
+               .strftime('%d/%m/%Y\t%H:%M:%S')
+
+        # Alineado a la izquierda
+        print(f"\t{'url':<{max_len}}: {element[0]}")
+        print(f"\t{'sha256':<{max_len}}: {element[1]}")
+        # print(f"\t{'positivos':<{max_len}}: {element[2]}\n")     # Siempre 0 por ser 'undetected_urls'
+        print(f"\t{'total':<{max_len}}: {element[3]}")
+        print(f"\t{'fecha':<{max_len}}: {date}")
+        print()
+
+    print('Muestras de remitentes no detectados:\n')
+    _print_reputation_dict(reputation['undetected_referrer_samples'])
+
+    print('Muestras de descargas no detectadas:\n')
+    _print_reputation_dict(reputation['undetected_downloaded_samples'])
+
+    print('Muestras de comunicaciones no detectadas:\n')
+    _print_reputation_dict(reputation['undetected_communicating_samples'])
+
+    print('Muestras de remitentes detectados:\n')
+    _print_reputation_dict(reputation['detected_referrer_samples'])
+
+    print('Muestras de descargas detectadas:\n')
+    _print_reputation_dict(reputation['detected_downloaded_samples'])
+
+    print('Muestras de comunicaciones detectadas:\n')
+    _print_reputation_dict(reputation['detected_communicating_samples'])
+
+    print('Resoluciones:\n')
+    for element in reputation['resolutions']:
+        date = datetime.strptime(element['last_resolved'], '%Y-%m-%d %H:%M:%S')\
+            .strftime('%d/%m/%Y\t%H:%M:%S')
+
+        # Alineado a la izquierda
+        print(f"\t{'host':<{max_len}}: {element['hostname']}")
+        print(f"\t{'fecha':<{max_len}}: {date}")
+        print()
 
 
 def print_info(ip: str):
@@ -108,6 +175,7 @@ def print_info(ip: str):
 
     if reputation:
         _print_singles(reputation)
+        _print_multiples(reputation)
 
     else:
         print(f'La IP no está registrada en VirusTotal.\n')
