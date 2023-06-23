@@ -6,8 +6,10 @@ una IP relacionada con VirusTotal.
 
 
 # Módulos necesarios
-import json             # Interpretación de ficheros JSON
-import requests         # Realizar peticiones HTTP
+import json                 # Interpretación de ficheros JSON
+import requests             # Realizar peticiones HTTP
+
+from io import StringIO     # Lectura de ficheros
 
 
 # Variables globales
@@ -43,6 +45,55 @@ def get_reputation(ip: str) -> str or None:
     return None
 
 
+def _get_country(country_code: str) -> str:
+    """
+    Obtiene el nombre del país a partir de su código.
+
+    :param country_code:    Código del país
+
+    :return:                Nombre del país
+    """
+    try:
+        response = requests.get(f'https://restcountries.com/v3.1/alpha/{country_code}')
+
+        if response.status_code == 200:
+            data = response.json()[0]
+
+            # Comprobar si existe traducción en español ('spa')
+            if 'spa' in data['translations']:
+                return data['translations']['spa']['common']
+
+            elif 'name' in data:
+                return data['name']['common']
+
+            else:
+                return '\033[31mdesconocido\033[0m'
+        else:
+            return '\033[31mmno encontrado\033[0m'
+
+    except requests.exceptions.RequestException:
+        return '\033[31mmno encontrado\033[0m'
+
+
+def _print_singles(reputation: dict):
+    """
+    Muestra la información de la IP que no requiere de un formato especial.
+
+    :param reputation:  Diccionario con la información de la IP
+    """
+    msg = StringIO()
+    country = _get_country(reputation['country'])
+
+    # Construir el mensaje
+    msg.write(f'Sistema Autónomo (AS): {reputation["as_owner"]} ({reputation["asn"]}).\n')
+    msg.write(f'Perteneciente a \'{country}\' ({reputation["country"]}).\n')
+
+    # Mostrar el mensaje
+    print(msg.getvalue())
+
+    msg.close()             # Debe cerrarse el buffer una vez se haya usado
+
+
 def print_info(ip: str):
     """
     Muestra la información formateada obtenida de la IP.
@@ -54,7 +105,7 @@ def print_info(ip: str):
     reputation = get_reputation(ip)
 
     if reputation:
-        print(json.dumps(reputation, indent=4))
+        _print_singles(reputation)
 
     else:
-        print(f"\033[31mNo se encontró información sobre '{ip}'.\033[0m")
+        print(f'La IP no está registrada en VirusTotal.\n')
