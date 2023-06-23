@@ -37,7 +37,8 @@ def get_reputation(ip: str) -> str or None:
     :return:    Cadena con la reputación de la IP en VirusTotal;
                 None en caso contrario
     """
-    response = requests.get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={_VIRUSTOTAL_API_KEY}&ip={ip}')
+    response = requests.get(f'https://www.virustotal.com/vtapi/v2/ip-address'
+                            f'/report?apikey={_VIRUSTOTAL_API_KEY}&ip={ip}')
 
     if response.status_code == 200:
         data = json.loads(response.text)
