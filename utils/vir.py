@@ -40,7 +40,8 @@ def get_reputation(ip: str) -> str or None:
     response = requests.get(f'https://www.virustotal.com/vtapi/v2/ip-address/report?apikey={_VIRUSTOTAL_API_KEY}&ip={ip}')
 
     if response.status_code == 200:
-        return json.loads(response.text)
+        data = json.loads(response.text)
+        return data if data['response_code'] == 1 else None     # 1: respuesta correcta
 
     return None
 
