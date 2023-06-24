@@ -47,7 +47,7 @@ def get_reputation(ip: str) -> str or None:
     return None
 
 
-def _get_country(country_code: str) -> str:
+def get_country(country_code: str) -> str:
     """
     Obtiene el nombre del país a partir de su código.
 
@@ -69,12 +69,12 @@ def _get_country(country_code: str) -> str:
                 return data['name']['common']
 
             else:
-                return '\033[31mdesconocido\033[0m'
+                return '\033[31mDesconocido\033[0m'
         else:
-            return '\033[31mmno encontrado\033[0m'
+            return '\033[31mmNo encontrado\033[0m'
 
     except requests.exceptions.RequestException:
-        return '\033[31mmno encontrado\033[0m'
+        return '\033[31mmLa petición falló\033[0m'
 
 
 def _print_singles(reputation: dict):
@@ -83,7 +83,7 @@ def _print_singles(reputation: dict):
 
     :param reputation:  Diccionario con la información de la IP
     """
-    country = _get_country(reputation['country'])
+    country = get_country(reputation['country'])
     
     print(f'Sistema Autónomo (AS): {reputation["as_owner"]} ({reputation["asn"]}).')
     print(f'Perteneciente a \'{country}\' ({reputation["country"]}).')

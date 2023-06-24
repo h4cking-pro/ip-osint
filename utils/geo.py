@@ -10,6 +10,8 @@ import json                         # Interpretación de ficheros JSON
 import requests                     # Realizar peticiones HTTP
 import socket                       # Realizar operaciones de red
 
+from utils.vir import get_country   # Obtener el nombre de un país a partir de su código
+
 
 def reverse_ip_to_domain(ip) -> str or None:
     """
@@ -33,25 +35,51 @@ def reverse_ip_to_domain(ip) -> str or None:
         return f"\033[1mTiempo de conexión agotado\033[0m"
 
 
-def geolocate(ip) -> str or None:
+def _handle_accent(text):
+    """
+    Cambia las combinaciones de caracteres que representan
+    acentos por sus equivalentes con acento.
+
+    :param text:    Texto a modificar
+
+    :return:        Texto con acentos
+    """
+    if type(text) is str:
+        text = text.replace('Ã¡', 'á').replace('Ã', 'Á')
+        text = text.replace('Ã©', 'é').replace('Ã‰', 'É')
+        text = text.replace('Ã­', 'í').replace('Ã', 'Í')
+        text = text.replace('Ã³', 'ó').replace('Ã“', 'Ó')
+        text = text.replace('Ãº', 'ú').replace('Ãš', 'Ú')
+        text = text.replace('Ã±', 'ñ').replace('Ã‘', 'Ñ')
+
+    return text
+
+
+def geolocate(ip) -> dict:
     """
     Utiliza geolocalización para obtener información de una IP.
 
     :param ip:  Dirección IP a analizar
 
-    :return:    Información de la IP; None en caso contrario
+    :return:    Diccionario con la información de la IP
     """
     response = requests.get(f'https://ipapi.co/{ip}/json/')
-    
+    data = {}
+
     if response.status_code == 200:
-        result = json.loads(response.text)
-        keys = result.keys()
-        data = {'city', 'region', 'country_name', 'country_capital',
-                'postal', 'latitude', 'longitude', 'languages'}
+        location = json.loads(response.text)
 
-        return {key: result[key] for key in keys & data}  # Lista por comprensión
+        # Filtrar las claves del resultado por las indicadas
+        for key in location.keys() & {'city', 'region', 'postal', 'latitude', 'longitude'}:
+            if location[key]:
+                data[key] = _handle_accent(location[key])
 
-    return None
+            else:
+                data[key] = '\033[31mSin información\033[0m'
+
+        data['country'] = get_country(location['country_code'])     # País traducido
+
+    return data
 
 
 def print_info(ip: str):
@@ -60,15 +88,22 @@ def print_info(ip: str):
 
     :param ip:  Dirección IP a analizar
     """
-    print('\n\033[1mGeolocalización\033[0m\n')     # Negrita
+    print('\n\033[1mGeolocalización\033[0m\n')  # Negrita
     
     geolocation = geolocate(ip)
 
     if geolocation:
-        print(json.dumps(geolocation, indent=4))
+        max_key_len = 12     # Lo que mide 'Coordenadas' + 1; claves ya traducidas
+        coordinates = f"({geolocation['latitude']}, {geolocation['longitude']})"
+
+        print(f'{"País":<{max_key_len}}: {geolocation["country"]}')
+        print(f'{"Región":<{max_key_len}}: {geolocation["region"]}')
+        print(f'{"Ciudad":<{max_key_len}}: {geolocation["city"]}')
+        print(f'{"Cód. Postal":<{max_key_len}}: {geolocation["postal"]}')
+        print(f'{"Coordenadas":<{max_key_len}}: {coordinates}')
 
     else:
-        print('\033[31mNo se pudo obtener información de geolocalización\033[0m')
+        print('\033[31mNo se pudo obtener información de la IP.\033[0m')
 
     print('\n\033[1mBúsqueda Inversa de IP\033[0m\n')     # Negrita
     
