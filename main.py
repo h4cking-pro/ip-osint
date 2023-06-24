@@ -97,6 +97,31 @@ def _is_valid(ip: str) -> bool:
     return True
 
 
+def _get_fails(ip_list: str) -> set:
+    """
+    Verifica que la lista de IPs pasada como argumento es válida.
+
+    :param ip_list:  Lista de IPs a verificar
+
+    :return:         Conjunto de IPs mal formadas.
+    """
+    fails = set()
+
+    try:
+        with open(ip_list, 'r') as file:
+            for ip in file:
+                if not _is_valid(ip.strip()):
+                    fails.add(ip.strip())
+
+    except FileNotFoundError:
+        raise FileNotFoundError
+
+    if fails:
+        print(f"\033[31mSe encontraron {len(fails)} IPs mal formadas:\033[0m")
+
+    return fails
+
+
 def show_info(ip) -> None:
     """
     Procesa una IP y muestra la información obtenida.
@@ -139,9 +164,17 @@ def main():
             show_info(args.ip)
 
     elif args.list:
-        with open(args.list, 'r') as file:
-            for ip in file:
-                show_info(ip.strip())
+        try:
+            fails = _get_fails(args.list)
+
+            with open(args.list, 'r') as file:
+                for ip in file:
+                    if ip.strip() not in fails:
+                        show_info(ip.strip())
+
+        except FileNotFoundError:
+            print(f"\033[31mFichero '{args.list}' no encontrado.\033[0m")
+            exit(1)
 
     else:
         parser.print_help()
