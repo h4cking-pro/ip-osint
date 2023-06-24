@@ -67,6 +67,36 @@ def set_keys_from_file(keys_file: str):
         exit(1)
 
 
+def _is_valid(ip: str) -> bool:
+    """
+    Verifica que la IP pasada como argumento es válida.
+
+    :param ip:  Dirección IP a verificar
+
+    :return:    True si la IP es válida; False en caso contrario
+    """
+    octets = ip.split('.')  # Separar la IP en octetos
+
+    if not ip.replace('.', '').isnumeric():
+        print(f"\033[31mLa cadena '{ip}' no representa una IP.\033[0m")
+        return False
+
+    if len(octets) < 4:
+        print(f"\033[31mLa IP '{ip}' es demasiado corta.\033[0m")
+        return False
+
+    elif 4 < len(octets):
+        print(f"\033[31mLa IP '{ip}' es demasiado larga.\033[0m")
+        return False
+
+    for octet in octets:
+        if not 0 <= int(octet) <= 255:
+            print(f"\033[31mError en el octeto '{octet}' de la IP.\033[0m")
+            return False
+
+    return True
+
+
 def show_info(ip) -> None:
     """
     Procesa una IP y muestra la información obtenida.
@@ -105,7 +135,8 @@ def main():
     set_keys_from_file(keys_file)
 
     if args.ip:
-        show_info(args.ip)
+        if _is_valid(args.ip):
+            show_info(args.ip)
 
     elif args.list:
         with open(args.list, 'r') as file:
