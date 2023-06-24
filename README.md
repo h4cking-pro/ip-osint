@@ -30,9 +30,15 @@ información; actualmente se usan las siguientes:
 # Ejecución
 
 > **Note**  
+> **Claves API**  
 > Necesitarás una clave API de Shodan y de VirusTotal para que el script obtenga la
 > información asociada a esas fuentes de información; si no se proporcionan, el script
 > funcionará con normalidad, ignorándolas.
+> 
+> **Salida formateada del terminal**  
+> El script está diseñado para mostrar la información de forma legible en el terminal,
+> lo que incluye colores, negritas, etc. esto puede explicar la presencia de caracteres
+> extraños en la salida en elagunas terminales.
 
 Este script puede usarse como un comando de terminal o con `python3`.
 
