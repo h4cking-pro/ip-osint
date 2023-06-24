@@ -184,4 +184,9 @@ if __name__ == '__main__':
     """
     Punto de entrada al script.
     """
-    main()
+    try:
+
+        main()
+
+    except KeyboardInterrupt:
+        exit(0)
