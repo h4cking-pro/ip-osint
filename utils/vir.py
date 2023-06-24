@@ -47,29 +47,32 @@ def get_reputation(ip: str) -> str or None:
     return None
 
 
-def get_country(country_code: str) -> str:
+def get_country(code: str) -> str:
     """
     Obtiene el nombre del país a partir de su código.
 
-    :param country_code:    Código del país
+    :param code:    Código del país
 
-    :return:                Nombre del país
+    :return:        Nombre del país
     """
     try:
-        response = requests.get(f'https://restcountries.com/v3.1/alpha/{country_code}')
+        response = requests.get(f'https://restcountries.com/v3.1/alpha/{code}')
 
         if response.status_code == 200:
             data = response.json()[0]
 
+            # Obtener un emoji de la bandera
+            flag = data['flag'] if 'flag' in data else '🏳️'
+
             # Comprobar si existe traducción en español ('spa')
             if 'spa' in data['translations']:
-                return data['translations']['spa']['common']
+                return f"{data['translations']['spa']['common']} {flag}"
 
             elif 'name' in data:
-                return data['name']['common']
+                return f"{data['name']['common']} {flag}"
 
             else:
-                return '\033[31mDesconocido\033[0m'
+                return f'\033[31mDesconocido {flag}\033[0m'
         else:
             return '\033[31mmNo encontrado\033[0m'
 
@@ -86,7 +89,7 @@ def _print_singles(reputation: dict):
     country = get_country(reputation['country'])
     
     print(f'Sistema Autónomo (AS): {reputation["as_owner"]} ({reputation["asn"]}).')
-    print(f'Perteneciente a \'{country}\' ({reputation["country"]}).')
+    print(f'Perteneciente a {country}.')
     print()
 
 
