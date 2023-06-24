@@ -26,13 +26,13 @@ def reverse_ip_to_domain(ip) -> str or None:
         return socket.gethostbyaddr(ip)[0]
     
     except socket.herror:
-        return f"\033[1mNo se pudo resolver el nombre para '{ip}'\033[0m"
-    
+        return f"\033[1mNo se pudo resolver '{ip}'.\033[0m"
+
     except socket.gaierror:
-        return f"\033[1mLa IP '{ip}' no es válida\033[0m"
-    
+        return f"\033[1mLa IP '{ip}' no es válida.\033[0m"
+
     except socket.timeout:
-        return f"\033[1mTiempo de conexión agotado\033[0m"
+        return f"\033[1mTiempo de conexión agotado.\033[0m"
 
 
 def _handle_accent(text):
