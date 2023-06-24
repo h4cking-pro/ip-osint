@@ -82,7 +82,7 @@ def geolocate(ip) -> dict:
     return data
 
 
-def _print_gelocation_info(ip: str):
+def _print_geolocation_info(ip: str):
     """
     Muestra la información obtenida de la IP
     relacionada con la geolocalización de la misma.
@@ -131,5 +131,5 @@ def print_info(ip: str):
 
     :param ip:  Dirección IP a analizar
     """
-    _print_gelocation_info(ip)
+    _print_geolocation_info(ip)
     _print_reverse_info(ip)
