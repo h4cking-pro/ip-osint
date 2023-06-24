@@ -82,18 +82,19 @@ def geolocate(ip) -> dict:
     return data
 
 
-def print_info(ip: str):
+def _print_gelocation_info(ip: str):
     """
-    Muestra la información formateada obtenida de la IP.
+    Muestra la información obtenida de la IP
+    relacionada con la geolocalización de la misma.
 
     :param ip:  Dirección IP a analizar
     """
     print('\n\033[1mGeolocalización\033[0m\n')  # Negrita
-    
+
     geolocation = geolocate(ip)
 
     if geolocation:
-        max_key_len = 12     # Lo que mide 'Coordenadas' + 1; claves ya traducidas
+        max_key_len = 12  # Lo que mide 'Coordenadas' + 1; claves ya traducidas
         coordinates = f"({geolocation['latitude']}, {geolocation['longitude']})"
 
         print(f'{"País":<{max_key_len}}: {geolocation["country"]}')
@@ -105,8 +106,16 @@ def print_info(ip: str):
     else:
         print('\033[31mNo se pudo obtener información de la IP.\033[0m')
 
-    print('\n\033[1mBúsqueda Inversa de IP\033[0m\n')     # Negrita
-    
+
+def _print_reverse_info(ip: str):
+    """
+    Muestra la información obtenida de la IP relacionada
+    con la búsqueda inversa de dominios de la misma.
+
+    :param ip:  Dirección IP a analizar
+    """
+    print('\n\033[1mBúsqueda Inversa de IP\033[0m\n')   # Negrita
+
     reverse_ip = reverse_ip_to_domain(ip)
 
     if reverse_ip:
@@ -114,3 +123,13 @@ def print_info(ip: str):
 
     else:
         print('\033[31mNo se pudo obtener información de búsqueda inversa\033[0m')
+
+
+def print_info(ip: str):
+    """
+    Muestra la información formateada obtenida de la IP.
+
+    :param ip:  Dirección IP a analizar
+    """
+    _print_gelocation_info(ip)
+    _print_reverse_info(ip)
