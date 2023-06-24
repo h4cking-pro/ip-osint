@@ -94,77 +94,83 @@ def _print_as_info(reputation: dict):
     print(f'Perteneciente a {country}.\n')
 
 
-def _print_multiples(reputation: dict):
+def _print_reputation_dict(rep: dict, dict_id: str, align: int):
+    """
+    Muestra el contenido de un elemento de reputación de VirusTotal.
+
+    :param rep:     Objeto de reputación de VirusTotal
+    :param dict_id: Identificador del elemento de la reputación a mostrar
+    :param align:   Cantidad de caracteres para alinear las claves
+    """
+    if rep.get(dict_id):
+        for item in rep[dict_id]:
+            date = datetime.strptime(item['date'], '%Y-%m-%d %H:%M:%S')\
+                   .strftime('%d/%m/%Y\t%H:%M:%S')
+
+            # Alineado a la izquierda
+            print(f"\t{'sha256':<{align}}: {item['sha256']}")
+            print(f"\t{'positivos':<{align}}: {item['positives']}")
+            print(f"\t{'total':<{align}}: {item['total']}")
+            print(f"\t{'fecha':<{align}}: {date}\n")
+
+    else:
+        print('\tNo hay muestras disponibles.\n')
+
+
+def _print_all_reputation_dicts(reputation: dict):
     """
     Muestra la información de la IP que requiere de un formato especial.
 
     :param reputation:  Diccionario con la información de la IP
     """
-    def _print_reputation_dict(elements: list):
-        """
-        Muestra el contenido de un elemento de reputación de VirusTotal.
+    max_len = 10    # Longitud de la clave más larga en español: 'positivos' + 1
 
-        :param elements:  Lista con la información de la IP
-        """
-        if elements:
-            for item in elements:
-                date = datetime.strptime(item['date'], '%Y-%m-%d %H:%M:%S')\
-                       .strftime('%d/%m/%Y\t%H:%M:%S')
+    print('URLs no detectadas:\n')      # Caso especial: los datos no tienen claves
+    if reputation.get('undetected_urls'):
+        for element in reputation['undetected_urls']:
+            date = datetime.strptime(element[4], '%Y-%m-%d %H:%M:%S')\
+                   .strftime('%d/%m/%Y\t%H:%M:%S')
 
-                # Alineado a la izquierda
-                print(f"\t{'sha256':<{max_len}}: {item['sha256']}")
-                print(f"\t{'positivos':<{max_len}}: {item['positives']}")
-                print(f"\t{'total':<{max_len}}: {item['total']}")
-                print(f"\t{'fecha':<{max_len}}: {date}")
-                print()
+            # Alineado a la izquierda
+            print(f"\t{'url':<{max_len}}: {element[0]}")
+            print(f"\t{'sha256':<{max_len}}: {element[1]}")
+            # print(f"\t{'positivos':<{max_len}}: {element[2]}\n")     # Siempre 0 por ser 'undetected_urls'
+            print(f"\t{'total':<{max_len}}: {element[3]}")
+            print(f"\t{'fecha':<{max_len}}: {date}\n")
 
-        else:
-            print('\t\033[31mNo hay muestras disponibles.\033[0m')
-            print()
-
-    # Calcular la máxima longitud de los nombres
-    max_len = max([len(key) for key, _ in reputation['detected_urls'][0].items()]) + 1
-
-    print('URLs no detectadas:\n')
-    for element in reputation['undetected_urls']:
-        date = datetime.strptime(element[4], '%Y-%m-%d %H:%M:%S')\
-               .strftime('%d/%m/%Y\t%H:%M:%S')
-
-        # Alineado a la izquierda
-        print(f"\t{'url':<{max_len}}: {element[0]}")
-        print(f"\t{'sha256':<{max_len}}: {element[1]}")
-        # print(f"\t{'positivos':<{max_len}}: {element[2]}\n")     # Siempre 0 por ser 'undetected_urls'
-        print(f"\t{'total':<{max_len}}: {element[3]}")
-        print(f"\t{'fecha':<{max_len}}: {date}")
-        print()
+    else:
+        print('\tNo hay información disponible.\n')
 
     print('Muestras de remitentes no detectados:\n')
-    _print_reputation_dict(reputation['undetected_referrer_samples'])
+    _print_reputation_dict(reputation, 'undetected_referrer_samples', max_len)
 
     print('Muestras de descargas no detectadas:\n')
-    _print_reputation_dict(reputation['undetected_downloaded_samples'])
+    _print_reputation_dict(reputation, 'undetected_downloaded_samples', max_len)
 
     print('Muestras de comunicaciones no detectadas:\n')
-    _print_reputation_dict(reputation['undetected_communicating_samples'])
+    _print_reputation_dict(reputation, 'undetected_communicating_samples', max_len)
 
     print('Muestras de remitentes detectados:\n')
-    _print_reputation_dict(reputation['detected_referrer_samples'])
+    _print_reputation_dict(reputation, 'detected_referrer_samples', max_len)
 
     print('Muestras de descargas detectadas:\n')
-    _print_reputation_dict(reputation['detected_downloaded_samples'])
+    _print_reputation_dict(reputation, 'detected_downloaded_samples', max_len)
 
     print('Muestras de comunicaciones detectadas:\n')
-    _print_reputation_dict(reputation['detected_communicating_samples'])
+    _print_reputation_dict(reputation, 'detected_communicating_samples', max_len)
 
-    print('Resoluciones:\n')
-    for element in reputation['resolutions']:
-        date = datetime.strptime(element['last_resolved'], '%Y-%m-%d %H:%M:%S')\
-            .strftime('%d/%m/%Y\t%H:%M:%S')
+    print('Resoluciones:\n')                    # Casos especiales: estructura distinta
+    if reputation.get('resolutions'):
+        for element in reputation['resolutions']:
+            date = datetime.strptime(element['last_resolved'], '%Y-%m-%d %H:%M:%S')\
+                .strftime('%d/%m/%Y\t%H:%M:%S')
 
-        # Alineado a la izquierda
-        print(f"\t{'host':<{max_len}}: {element['hostname']}")
-        print(f"\t{'fecha':<{max_len}}: {date}")
-        print()
+            # Alineado a la izquierda
+            print(f"\t{'host':<{max_len}}: {element['hostname']}")
+            print(f"\t{'fecha':<{max_len}}: {date}\n")
+
+    else:
+        print('\tNo hay información disponible.\n')
 
 
 def print_info(ip: str):
@@ -179,7 +185,7 @@ def print_info(ip: str):
 
     if reputation:
         _print_as_info(reputation)
-        _print_multiples(reputation)
+        _print_all_reputation_dicts(reputation)
 
     else:
         print(f'La IP no está registrada en VirusTotal.\n')
