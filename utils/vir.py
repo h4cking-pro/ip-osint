@@ -73,6 +73,7 @@ def get_country(code: str) -> str:
 
             else:
                 return f'\033[31mDesconocido {flag}\033[0m'
+
         else:
             return '\033[31mmNo encontrado\033[0m'
 
@@ -80,7 +81,7 @@ def get_country(code: str) -> str:
         return '\033[31mmLa petición falló\033[0m'
 
 
-def _print_singles(reputation: dict):
+def _print_as_info(reputation: dict):
     """
     Muestra la información de la IP que no requiere de un formato especial.
 
@@ -88,9 +89,9 @@ def _print_singles(reputation: dict):
     """
     country = get_country(reputation['country'])
     
+    # Mostrar información sobre el AS, ASN y su país
     print(f'Sistema Autónomo (AS): {reputation["as_owner"]} ({reputation["asn"]}).')
-    print(f'Perteneciente a {country}.')
-    print()
+    print(f'Perteneciente a {country}.\n')
 
 
 def _print_multiples(reputation: dict):
@@ -177,7 +178,7 @@ def print_info(ip: str):
     reputation = get_reputation(ip)
 
     if reputation:
-        _print_singles(reputation)
+        _print_as_info(reputation)
         _print_multiples(reputation)
 
     else:
