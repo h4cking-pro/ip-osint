@@ -77,7 +77,8 @@ def geolocate(ip) -> dict:
             else:
                 data[key] = '\033[31mSin información\033[0m'
 
-        data['country'] = get_country(location['country_code'])     # País traducido
+        if 'country_code' in location.keys():
+            data['country'] = get_country(location['country_code'])     # País traducido
 
     return data
 
