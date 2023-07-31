@@ -24,7 +24,7 @@ información; actualmente se usan las siguientes:
 
 1. Instalar [Python 3](https://www.python.org/downloads).
 2. Clonar el repositorio.
-3. Instalar las dependencias con `pip -r requirements.txt`.
+3. Instalar las dependencias (`pip install -r requirements.txt`).
 
 
 # Ejecución
